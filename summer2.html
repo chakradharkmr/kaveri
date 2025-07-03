@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Summer Guide: Activities in Almere</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony -->
+    <!-- Application Structure Plan: The SPA is designed as an interactive dashboard, not a linear report. The core is a powerful filtering system (by type, cost, duration, weather) that allows parents to instantly find suitable activities. Results are shown as a grid of summary cards. Clicking a card opens a detailed modal view, preventing information overload on the main screen. This task-oriented structure directly answers the user's need: "What can my son do today/this summer?" by making the data explorable and actionable, which is far more user-friendly than reading a static document. -->
+    <!-- Visualization & Content Choices: Report data is transformed into interactive components. Activity details are stored in a JS object and presented in cards and modals (Goal: Inform). Filters are interactive buttons that control card visibility (Goal: Organize/Filter). A key feature is a dynamic Chart.js horizontal bar chart allowing users to visually compare the costs of selected activities (Goal: Compare). This is more intuitive than comparing numbers in a table. All visuals are built with standard HTML/Tailwind or Canvas via Chart.js, avoiding SVG/Mermaid. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .chart-container { position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; height: 350px; max-height: 50vh; }
+        .filter-btn-active { background-color: #38a169; color: white; }
+        .modal { transition: opacity 0.25s ease; }
+        .modal-content { transition: transform 0.25s ease; }
+        .activity-card { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        .activity-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-6 py-8 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-emerald-700">Almere Summer Guide</h1>
+            <p class="mt-4 text-lg text-stone-600 max-w-3xl mx-auto">An interactive guide to the best summer activities for a 9-year-old boy in and around Muziekwijk (within a 5 km radius). Use the filters to find the perfect adventure!</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-10">
+        
+        <section id="filters" class="mb-12 p-6 bg-white rounded-2xl shadow-lg">
+            <h2 class="text-2xl font-bold mb-6 text-center text-emerald-700">Find Your Perfect Activity</h2>
+            <div class="space-y-6">
+                <div>
+                    <h3 class="font-semibold mb-3 text-lg text-stone-700">Activity Type</h3>
+                    <div id="filter-type" class="flex flex-wrap gap-3"></div>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-3 text-lg text-stone-700">Cost</h3>
+                    <div id="filter-cost" class="flex flex-wrap gap-3"></div>
+                </div>
+                 <div>
+                    <h3 class="font-semibold mb-3 text-lg text-stone-700">Weather Suitability</h3>
+                    <div id="filter-weather" class="flex flex-wrap gap-3"></div>
+                </div>
+            </div>
+            <div class="mt-6 text-center">
+                <button id="reset-filters" class="px-6 py-2 bg-red-500 text-white font-semibold rounded-lg shadow hover:bg-red-600 transition-colors">Reset Filters</button>
+            </div>
+        </section>
+
+        <section id="activities">
+             <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-emerald-700">Activities</h2>
+                <p id="activity-count" class="text-stone-600 font-medium"></p>
+            </div>
+            <p class="mb-8 text-stone-600">Below are activities that match your criteria. Click on a card for full details, such as opening hours, specific costs, and location. Check the 'Compare' box to add activities to the comparison chart below.</p>
+            <div id="activity-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div>
+        </section>
+        
+        <section id="comparison" class="mt-16">
+            <h2 class="text-3xl font-bold text-center mb-4 text-emerald-700">Compare Activities</h2>
+            <p class="text-center text-stone-600 mb-8 max-w-2xl mx-auto">Select up to 5 activities above to visually compare their average costs. This helps you quickly make a choice that fits your budget.</p>
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <div class="chart-container">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="modal" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none">
+        <div id="modal-content" class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto transform scale-95">
+            <div class="sticky top-0 bg-white p-6 border-b border-stone-200 flex justify-between items-center">
+                <h2 id="modal-title" class="text-2xl font-bold text-emerald-700"></h2>
+                <button id="modal-close" class="text-3xl font-light text-stone-500 hover:text-red-500 transition-colors">&times;</button>
+            </div>
+            <div id="modal-body" class="p-8">
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white mt-16 py-6 border-t">
+        <div class="container mx-auto px-6 text-center text-stone-500">
+            <p>&copy; 2025 Almere Summer Guide. Created to make summer planning easier.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const activitiesData = [
+                { id: 'sec-outdoor-camp', name: 'Outdoor Summer Camp', provider: 'Outdoorpark SEC Almere', type: ['Outdoor Sports', 'Camp'], costCategory: ['Camp'], weather: ['Sunny'], age: '8+', duration: '2 days, 1 night', cost: 125, dates: 'July 15-16; July 29-30; Aug 7-8, 2025', description: 'A two-day, one-night adventure filled with canoeing, survival techniques, archery, fire making, compass reading, and raft building. This camp promises thrilling adventures and ample opportunities for social interaction and enjoyment.', location: 'Verlaatweg 2, 1358 AJ Almere', distance: 3.5 },
+                { id: 'sec-holiday-week', name: 'Outdoor Holiday Week', provider: 'Outdoorpark SEC Almere', type: ['Outdoor Sports', 'Camp'], costCategory: ['Medium'], weather: ['Sunny'], age: '8+', duration: '5 days', cost: 60, dates: 'July 21-25; Aug 4-8, 2025', description: 'A five-day program where participants engage in new outdoor activities daily. These include survival, bushcraft, canoeing, high-rope climbing, teambuilding exercises, and raft building, guaranteeing a week full of fun.', location: 'Verlaatweg 2, 1358 AJ Almere', distance: 3.5 },
+                { id: 'sec-archery', name: 'Daily Archery', provider: 'Outdoorpark SEC Almere', type: ['Outdoor Sports'], costCategory: ['Low'], weather: ['Sunny'], age: '7+', duration: 'Single day', cost: 10.50, dates: 'Every Tuesday, July 12 - August 17, 2025', description: 'A superb opportunity to learn the fundamentals of archery and practice hitting the bullseye under expert instruction.', location: 'Verlaatweg 2, 1358 AJ Almere', distance: 3.5 },
+                { id: 'sec-canoeing', name: 'Daily Canoeing', provider: 'Outdoorpark SEC Almere', type: ['Watersports'], costCategory: ['Low'], weather: ['Sunny'], age: '8+', duration: 'Single day', cost: 10.50, dates: 'Every Wednesday, July 12 - August 17, 2025', description: 'An outing brimming with sport, games, and enjoyment. Learn canoeing techniques and engage in thrilling competitions and water-based games.', location: 'Verlaatweg 2, 1358 AJ Almere', distance: 3.5 },
+                { id: 'sec-survival', name: 'Daily Kids Survival', provider: 'Outdoorpark SEC Almere', type: ['Outdoor Sports'], costCategory: ['Low'], weather: ['Sunny'], age: '8+', duration: 'Single day', cost: 10.50, dates: 'Every Thursday, July 12 - August 17, 2025', description: 'A demanding and energetic outing featuring jungle bridges, camouflage tunnels, and various obstacle courses. Be prepared: you will get very dirty!', location: 'Verlaatweg 2, 1358 AJ Almere', distance: 3.5 },
+                { id: 'sec-waterfun', name: 'Daily Water Fun Package', provider: 'Outdoorpark SEC Almere', type: ['Watersports', 'Outdoor Sports'], costCategory: ['Low'], weather: ['Sunny'], age: 'All', duration: 'Single day', cost: 10.50, dates: 'Every Friday, July 12 - August 17, 2025', description: 'This day is dedicated to getting thoroughly wet and having a blast with activities such as jungle bridges over water, a waterswing, raft building, an exciting water challenge, camo tunnels, and a mud slide.', location: 'Verlaatweg 2, 1358 AJ Almere', distance: 3.5 },
+                { id: 'sec-family-survival', name: 'Daily Family Survival', provider: 'Outdoorpark SEC Almere', type: ['Outdoor Sports'], costCategory: ['Low'], weather: ['Sunny'], age: '5+', duration: 'Single day', cost: 10.50, dates: 'Every Sunday, July 12 - August 17, 2025', description: 'An adventurous and action-packed outing designed for the entire family, including children, parents, and guardians, who are prepared to get muddy.', location: 'Verlaatweg 2, 1358 AJ Almere', distance: 3.5 },
+                { id: 'haddock', name: 'Watersports Camp', provider: 'Haddock Watersport', type: ['Watersports', 'Camp'], costCategory: ['Camp'], weather: ['Sunny'], age: '7-12', duration: '5 days', cost: 387, dates: 'Weekly in July & August: July 14-18; July 21-25; Aug 11-15; Aug 18-22, 2025', description: 'Learn to sail, windsurf, canoe, and more. Choose between a day program (External) or an overnight camp (Internal). Program includes sailing, windsurfing, canoeing, raft building, and Stand-Up Paddling (SUPing). Overnight option includes evening activities and campfires.', location: 'Surfstrand Haven 2, 1353 CT Almere', distance: 4.5 },
+                { id: 'warrior', name: 'Warrior Skillz Summer Camp', provider: 'Warrior Skillz', type: ['Indoor Sports', 'Camp'], costCategory: ['Camp'], weather: ['All'], age: '5-12', duration: '1-6 weeks (or single days)', cost: 175, dates: 'July 14 - Aug 22, 2025 (6 weekly sessions)', description: 'Build self-confidence, resilience, and self-defense skills. Includes Anti-Bullying Workshop and Warrior Life Skillz® sessions focusing on character development. Optional activities like ball sports, dancing, or crafting. Single day costs €57, multi-week discounts available.', location: 'Slufterplantsoen 10, 1316 KX Almere', distance: 2.5 },
+                { id: 'jumping-jack', name: 'Jumping Jack Trampoline Park', provider: 'Jumping Jack', type: ['Indoor Play'], costCategory: ['Medium'], weather: ['Rainy'], age: 'All', duration: 'Per hour / 45 min', cost: 14.50, dates: 'Jumphal: Mon-Fri 11:00-17:00; Sat-Sun 10:00-17:00. Mini Golf: Mon-Fri 11:00-21:30; Sat 10:00-19:30; Sun 10:00-17:30.', description: 'An urban trampoline park for jumping and stunting. Also features a distinctive glow-in-the-dark mini-golf course. Free jumping: €14.50/hr. Mini golf: €9.85/45min. Combi ticket: €20.', location: 'Koninginneweg 1, 1312 AW Almere', distance: 2.5 },
+                { id: 'beatrixpark', name: 'Beatrixpark Playground', provider: 'Public Playground', type: ['Outdoor Play'], costCategory: ['Free'], weather: ['Sunny'], age: 'All', duration: 'Flexible', cost: 0, dates: 'Always open', description: 'Spacious and adventurous playground with climbing towers, slides, and swings. Securely fenced with ample seating for parents. Midgetgolf Almere is conveniently situated nearby.', location: 'Beatrixpromenade 7, 1312 AW Almere', distance: 1.5 },
+                { id: 'muzenpark', name: 'Muzenpark Playground', provider: 'Public Playground', type: ['Outdoor Play'], costCategory: ['Free'], weather: ['Sunny'], age: 'All', duration: 'Flexible', cost: 0, dates: 'Always open', description: 'A hidden gem featuring two distinct playgrounds with climbing frames, swings, a sandpit, seesaws, and a slide. Also includes a football field, basketball court, and skatepark. Expansive grassy areas for relaxation or picnics.', location: 'Local to Muziekwijk (exact address not specified)', distance: 1.0 },
+                { id: 'jeugdland', name: 'Jeugdland Stad Adventure Playground', provider: 'Adventure Playground', type: ['Outdoor Play', 'Creative'], costCategory: ['Low'], weather: ['Sunny'], age: '4-14', duration: 'Half-day', cost: 1, dates: 'Wed-Fri 10:30-17:00, Sat 10:00-16:00 (July 12 - Aug 25, 2025). Closed July 4th & 12th. Open day July 5th.', description: 'A unique destination where children can engage in activities such as hut building, go-karting, and trampolining. Designed to cultivate self-confidence, creativity, and problem-solving abilities through hands-on, unstructured play.', location: 'Weg 1940-1945 8, 1318 EL Almere', distance: 2.5 },
+                { id: 'speelhaven', name: 'Speelhaven Playground', provider: 'Public Playground', type: ['Outdoor Play'], costCategory: ['Free'], weather: ['Sunny'], age: 'All', duration: 'Flexible', cost: 0, dates: 'Always open', description: 'This playground in Almere Haven offers a wealth of adventure, including a large slide, a playful boat, swings, and an exciting zip line. Children can also freely interact with provided bikes, scooters, sand toys, and engage with the combination of sand and water elements.', location: 'Meerveldstraat 59, 1359 HZ ALMERE', distance: 4.5 },
+                { id: 'vrijbuiter', name: 'De Vrijbuiter Swimming Pool', provider: 'Swimming Pool', type: ['Swimming'], costCategory: ['Low'], weather: ['All'], age: 'All', duration: 'Half-day', cost: 7, dates: 'Family Swim: Sun 10:00-12:00. Public Swim: Mon-Fri 12:00-16:00, Sun 13:00-16:00 (summer vacation period).', description: 'Recreation pool with a 90-meter slide, current accelerator, whirlpool, and various play elements. A separate baby pool is also available. Perfect for a day of water fun.', location: 'Globelein 1, 1334BT Almere', distance: 3.5 },
+                { id: 'kidsfun', name: 'Kidsfun Almere Centrum', provider: 'Municipality of Almere', type: ['Creative', 'Outdoor Play'], costCategory: ['Free'], weather: ['Sunny'], age: '3-13', duration: 'Afternoon', cost: 0, dates: 'Every Wednesday (July 16 - August 20, 2025), 13:00-17:00. Each week features a different theme (crafting, sports, bouncy castles, world/music, animal themes, circus).', description: 'Free weekly activities in the city center with a different exciting theme each week, ensuring continuous engagement and catering to a wide range of interests. Promotes creativity and physical activity in a community setting.', location: 'Esplanade/Forum, Almere Centrum', distance: 2.5 },
+                { id: 'jungle', name: 'Almere Jungle', provider: 'Animal Park', type: ['Animals'], costCategory: ['Medium'], weather: ['All'], age: 'All', duration: 'Half-day', cost: 12, dates: 'Daily 10:00-17:00 (Mon-Sat), 10:00-17:30 (Sun)', description: 'Meet exotic animals such as pythons, alpacas, and meerkats. In summer, features "A-Jay’s Spetterpret" for interactive water fun among the animal exhibits, allowing visitors to activate splashing spots to cool off.', location: 'Kemphaanpad 2, 1358 AC Almere', distance: 3.5 },
+                { id: 'beestenbende', name: 'Kinderboerderij de Beestenbende', provider: 'Children\'s Farm', type: ['Animals'], costCategory: ['Free'], weather: ['All'], age: 'All', duration: 'Flexible', cost: 0, dates: 'Sat: 14:00-16:30; Sun: 10:00-12:30', description: 'Meet and care for various animals, including goats and ponies. Children can enjoy interactive experiences such as brushing goats and participating in scavenger hunts through the surrounding Polderpark.', location: 'M.J. Granpré Molièrestraat 1, 1333KB Almere', distance: 3.5 },
+                { id: 'de-stek', name: 'Kinderboerderij De Stek', provider: 'Children\'s Farm', type: ['Animals'], costCategory: ['Free'], weather: ['All'], age: 'All', duration: 'Flexible', cost: 0, dates: 'Daily 10:00-15:30 (Children\'s Farm)', description: 'Interact with farm animals such as rabbits, goats, chickens, and pigs, with opportunities to cuddle, pet, and occasionally feed them. Also offers pony riding lessons and features a woodcraft group creating items. A "Summer holiday activities agenda" is scheduled.', location: 'Rie Mastenbroeksportpark 8, 1314 AZ Almere', distance: 3.5 },
+                { id: 'bibliotheek', name: 'De Nieuwe Bibliotheek', provider: 'Library', type: ['Creative', 'Educational'], costCategory: ['Free'], weather: ['Rainy'], age: '6+', duration: 'Workshop', cost: 0, dates: 'Check website for specific workshop dates/times', description: 'Participate in free workshops such as robotics, programming, and drawing. A learning and creative afternoon. The library also screens youth films and hosts youth theater performances.', location: 'Stadhuisplein 101, 1315 XC Almere', distance: 2.5 }
+            ];
+
+            const filterTypeContainer = document.getElementById('filter-type');
+            const filterCostContainer = document.getElementById('filter-cost');
+            const filterWeatherContainer = document.getElementById('filter-weather');
+            const activityGrid = document.getElementById('activity-grid');
+            const activityCount = document.getElementById('activity-count');
+            const resetBtn = document.getElementById('reset-filters');
+
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modal-content');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const modalClose = document.getElementById('modal-close');
+
+            let activeFilters = { type: null, cost: null, weather: null };
+            let comparisonList = [];
+
+            const types = [...new Set(activitiesData.flatMap(a => a.type))];
+            const costs = ['Free', 'Low', 'Medium', 'Camp'];
+            const weathers = ['Sunny', 'Rainy', 'All'];
+            
+            function createFilterButtons(container, items, category) {
+                items.forEach(item => {
+                    const button = document.createElement('button');
+                    button.className = 'px-4 py-2 text-sm font-medium border border-stone-300 rounded-lg hover:bg-emerald-100 transition-colors';
+                    button.textContent = item;
+                    button.dataset.filter = item;
+                    button.dataset.category = category;
+                    container.appendChild(button);
+                });
+            }
+
+            createFilterButtons(filterTypeContainer, types, 'type');
+            createFilterButtons(filterCostContainer, costs, 'cost');
+            createFilterButtons(filterWeatherContainer, weathers, 'weather');
+
+            function renderActivities() {
+                activityGrid.innerHTML = '';
+                let visibleCount = 0;
+                
+                const filtered = activitiesData.filter(activity => {
+                    const typeMatch = !activeFilters.type || activity.type.includes(activeFilters.type);
+                    const costMatch = !activeFilters.cost || activity.costCategory.includes(activeFilters.cost);
+                    const weatherMatch = !activeFilters.weather || activeFilters.weather === 'All' || activity.weather.includes(activeFilters.weather);
+                    return typeMatch && costMatch && weatherMatch;
+                });
+
+                visibleCount = filtered.length;
+                activityCount.textContent = `${visibleCount} activit${visibleCount === 1 ? 'y' : 'ies'} found`;
+
+                if (visibleCount === 0) {
+                    activityGrid.innerHTML = `<p class="text-stone-600 md:col-span-2 lg:col-span-3 text-center">No activities found matching your criteria. Try a different filter.</p>`;
+                } else {
+                    filtered.forEach(activity => {
+                        const card = document.createElement('div');
+                        card.className = 'activity-card bg-white rounded-2xl shadow-md overflow-hidden cursor-pointer flex flex-col';
+                        card.dataset.id = activity.id;
+
+                        let costDisplay = '';
+                        if (activity.cost === 0) {
+                            costDisplay = 'Free';
+                        } else if (activity.costCategory.includes('Camp')) {
+                            if (activity.name === 'Watersports Camp') {
+                                costDisplay = `€${activity.cost.toFixed(2)} - €425.00`;
+                            } else if (activity.name === 'Warrior Skillz Summer Camp') {
+                                costDisplay = `€${activity.cost.toFixed(2)}/week (from €57/day)`;
+                            } else {
+                                costDisplay = `€${activity.cost.toFixed(2)} p.p.`;
+                            }
+                        } else if (activity.costCategory.includes('Medium') && activity.name === 'Jumping Jack Trampoline Park') {
+                            costDisplay = `€${activity.cost.toFixed(2)}/hr`;
+                        } else if (activity.costCategory.includes('Low')) {
+                            costDisplay = `€${activity.cost.toFixed(2)}`;
+                        } else {
+                            costDisplay = `~€${activity.cost.toFixed(2)}`;
+                        }
+
+
+                        card.innerHTML = `
+                            <div class="p-6 flex-grow">
+                                <p class="text-sm font-semibold text-emerald-600 mb-1">${activity.provider}</p>
+                                <h3 class="text-xl font-bold mb-3 text-stone-800">${activity.name}</h3>
+                                <div class="flex flex-wrap gap-2 mb-4">
+                                    ${activity.type.map(t => `<span class="text-xs font-medium bg-stone-100 text-stone-600 px-2 py-1 rounded-full">${t}</span>`).join('')}
+                                </div>
+                                <p class="text-stone-500 text-sm">Age: ${activity.age} | Distance: ~${activity.distance} km</p>
+                            </div>
+                            <div class="p-6 bg-stone-50 border-t border-stone-200 flex justify-between items-center">
+                                <span class="font-bold text-lg text-emerald-700">${costDisplay}</span>
+                                <div class="flex items-center">
+                                    <label for="compare-${activity.id}" class="text-sm mr-2 text-stone-600">Compare</label>
+                                    <input type="checkbox" id="compare-${activity.id}" data-id="${activity.id}" class="compare-checkbox h-5 w-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                                </div>
+                            </div>
+                        `;
+                        activityGrid.appendChild(card);
+                    });
+                }
+            }
+            
+            function handleFilterClick(e) {
+                if (!e.target.matches('button[data-filter]')) return;
+
+                const btn = e.target;
+                const category = btn.dataset.category;
+                const filter = btn.dataset.filter;
+
+                const parent = btn.parentElement;
+                parent.querySelectorAll('button').forEach(b => b.classList.remove('filter-btn-active'));
+                
+                if (activeFilters[category] === filter) {
+                    activeFilters[category] = null;
+                } else {
+                    activeFilters[category] = filter;
+                    btn.classList.add('filter-btn-active');
+                }
+                
+                renderActivities();
+            }
+
+            function resetFilters() {
+                activeFilters = { type: null, cost: null, weather: null };
+                document.querySelectorAll('#filters button').forEach(b => b.classList.remove('filter-btn-active'));
+                renderActivities();
+            }
+
+            function openModal(id) {
+                const activity = activitiesData.find(a => a.id === id);
+                if (!activity) return;
+
+                modalTitle.textContent = activity.name;
+                
+                let costDisplayModal = '';
+                if (activity.cost === 0) {
+                    costDisplayModal = 'Free';
+                } else if (activity.name === 'Watersports Camp') {
+                    costDisplayModal = `€${activity.cost.toFixed(2)} - €425.00 (5-day camp)`;
+                } else if (activity.name === 'Warrior Skillz Summer Camp') {
+                    costDisplayModal = `€${activity.cost.toFixed(2)}/week (or €57/day, multi-week discounts available)`;
+                } else if (activity.name === 'Jumping Jack Trampoline Park') {
+                    costDisplayModal = `Free jumping: €${activity.cost.toFixed(2)}/hour. Glow in the dark golf: €9.85/45 min. Combi ticket: €20.`;
+                } else if (activity.costCategory.includes('Camp') || activity.name.includes('week')) {
+                    costDisplayModal = `€${activity.cost.toFixed(2)} per person`;
+                } else {
+                    costDisplayModal = `€${activity.cost.toFixed(2)}`;
+                }
+
+                modalBody.innerHTML = `
+                    <p class="text-lg text-stone-700 mb-6">${activity.description}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-stone-600">
+                        <div class="bg-stone-100 p-4 rounded-lg">
+                            <h4 class="font-bold mb-2 text-stone-800">Details</h4>
+                            <p><strong>Provider:</strong> ${activity.provider}</p>
+                            <p><strong>Age:</strong> ${activity.age}</p>
+                            <p><strong>Duration:</strong> ${activity.duration}</p>
+                            <p><strong>Distance:</strong> ~${activity.distance} km</p>
+                        </div>
+                        <div class="bg-stone-100 p-4 rounded-lg">
+                            <h4 class="font-bold mb-2 text-stone-800">Practical Info</h4>
+                            <p><strong>Cost:</strong> ${costDisplayModal}</p>
+                            <p><strong>Dates:</strong> ${activity.dates}</p>
+                            <p><strong>Location:</strong> ${activity.location}</p>
+                        </div>
+                    </div>
+                `;
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                modalContent.classList.remove('scale-95');
+            }
+
+            function closeModal() {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                modalContent.classList.add('scale-95');
+            }
+
+            function handleGridClick(e) {
+                if (e.target.matches('.compare-checkbox')) {
+                    const id = e.target.dataset.id;
+                    if (e.target.checked) {
+                        if (comparisonList.length < 5) {
+                            comparisonList.push(id);
+                        } else {
+                            e.target.checked = false;
+                            alert('You can compare a maximum of 5 activities.');
+                        }
+                    } else {
+                        comparisonList = comparisonList.filter(compId => compId !== id);
+                    }
+                    updateComparisonChart();
+                } else {
+                   const card = e.target.closest('.activity-card');
+                   if(card) {
+                       openModal(card.dataset.id);
+                   }
+                }
+            }
+            
+            const ctx = document.getElementById('comparisonChart').getContext('2d');
+            const comparisonChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Average Cost (€)',
+                        data: [],
+                        backgroundColor: 'rgba(52, 211, 153, 0.7)',
+                        borderColor: 'rgba(5, 150, 105, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Cost in Euro (€)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` Cost: €${context.raw.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            function updateComparisonChart() {
+                const selectedActivities = activitiesData.filter(a => comparisonList.includes(a.id));
+                comparisonChart.data.labels = selectedActivities.map(a => a.name);
+                comparisonChart.data.datasets[0].data = selectedActivities.map(a => a.cost);
+                comparisonChart.update();
+            }
+
+            document.getElementById('filters').addEventListener('click', handleFilterClick);
+            resetBtn.addEventListener('click', resetFilters);
+            activityGrid.addEventListener('click', handleGridClick);
+            
+            modalClose.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+
+            renderActivities();
+            updateComparisonChart();
+        });
+    </script>
+</body>
+</html>
