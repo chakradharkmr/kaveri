@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Activity Guide for Children in Almere</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals with Subtle Accents -->
+    <!-- Application Structure Plan: The SPA is designed as an interactive dashboard. The core is a filtering system allowing users to select activities by Type (Sport, Kunst, etc.), Cost, and Diploma availability. Results are displayed as dynamic cards in a grid. Clicking a card opens a modal with full details. This structure empowers users to quickly find relevant information based on their specific needs, which is more efficient than reading a linear report. Key interactions include filter selection, card clicking for modals, and hovering over charts for tooltips. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Distribution of activity types -> Goal: Compare -> Viz: Donut Chart -> Justification: Clearly shows proportions of the whole catalog -> Library: Chart.js/Canvas.
+        - Report Info: Range of costs -> Goal: Compare -> Viz: Bar Chart -> Justification: Effectively compares price points across different activity categories -> Library: Chart.js/Canvas.
+        - Report Info: Detailed activity listings -> Goal: Inform/Organize -> Presentation: Interactive Cards + Modals -> Justification: Keeps the main view clean while providing deep detail on demand. Filtering the cards makes the data explorable -> Method: HTML/CSS/JS.
+        - Report Info: Diploma/Certification availability -> Goal: Organize -> Presentation: Filter button + Icon on card (🏆) -> Justification: Provides a quick visual cue and powerful filtering capability without needing a separate chart -> Method: HTML/CSS/JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8F7F4; color: #4A4A4A; }
+        .filter-btn { transition: all 0.2s ease-in-out; }
+        .filter-btn.active { background-color: #A8D5BA; color: #2C5E4A; border-color: #2C5E4A; font-weight: 600; }
+        .activity-card { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        .activity-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .modal-backdrop { display: none; position: fixed; z-index: 50; inset: 0; background-color: rgba(0,0,0,0.5); }
+        .modal-content { max-height: 90vh; }
+        .chart-container { position: relative; width: 100%; max-width: 450px; margin-left: auto; margin-right: auto; height: 320px; max-height: 350px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#2C5E4A]">Almere Activity Guide</h1>
+            <p class="mt-3 text-lg text-gray-600 max-w-3xl mx-auto">Find the perfect sport, art, or community activity for children (age 9, Groep 6 equivalent) in Almere Stad & Muziekwijk.</p>
+        </header>
+
+        <section id="dashboard" class="bg-white rounded-xl shadow-lg p-6 mb-12">
+            <h2 class="text-2xl font-bold text-center text-[#2C5E4A] mb-6">Activity Overview</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div>
+                    <h3 class="text-xl font-semibold text-center mb-3">Activities by Category</h3>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-center mb-3">Indicative Monthly Costs</h3>
+                     <div class="chart-container">
+                        <canvas id="costChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <main>
+            <div id="filters" class="bg-white rounded-xl shadow-lg p-6 mb-8 sticky top-4 z-40">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="font-semibold text-gray-700 block mb-2">Filter by Type</label>
+                        <div id="type-filter" class="flex flex-wrap gap-2">
+                            <button data-filter="all" class="filter-btn active py-2 px-4 border border-gray-300 rounded-full text-sm">All</button>
+                            <button data-filter="Sport" class="filter-btn py-2 px-4 border border-gray-300 rounded-full text-sm">🏃 Sport</button>
+                            <button data-filter="Art & Music" class="filter-btn py-2 px-4 border border-gray-300 rounded-full text-sm">🎨 Art & Music</button>
+                            <button data-filter="Community" class="filter-btn py-2 px-4 border border-gray-300 rounded-full text-sm">🤝 Community</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="font-semibold text-gray-700 block mb-2">Filter by Cost</label>
+                        <div id="cost-filter" class="flex flex-wrap gap-2">
+                            <button data-filter="all" class="filter-btn active py-2 px-4 border border-gray-300 rounded-full text-sm">All Costs</button>
+                            <button data-filter="free" class="filter-btn py-2 px-4 border border-gray-300 rounded-full text-sm">Free</button>
+                            <button data-filter="low" class="filter-btn py-2 px-4 border border-gray-300 rounded-full text-sm">&lt; €50/month</button>
+                            <button data-filter="medium" class="filter-btn py-2 px-4 border border-gray-300 rounded-full text-sm">&gt; €50/month</button>
+                            <button data-filter="unknown" class="filter-btn py-2 px-4 border border-gray-300 rounded-full text-sm">Inquire for info</button>
+                        </div>
+                    </div>
+                     <div>
+                        <label class="font-semibold text-gray-700 block mb-2">Filter by Diploma</label>
+                        <div id="diploma-filter" class="flex flex-wrap gap-2">
+                            <button data-filter="all" class="filter-btn active py-2 px-4 border border-gray-300 rounded-full text-sm">Both</button>
+                            <button data-filter="yes" class="filter-btn py-2 px-4 border border-gray-300 rounded-full text-sm">With Diploma</button>
+                            <button data-filter="no" class="filter-btn py-2 px-4 border border-gray-300 rounded-full text-sm">Without Diploma</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="activity-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div>
+             <p id="no-results" class="hidden text-center text-gray-500 py-10">No activities found matching your criteria. Try a different filter combination.</p>
+        </main>
+    </div>
+
+    <div id="modal" class="modal-backdrop items-center justify-center">
+        <div id="modal-content" class="modal-content bg-white rounded-lg shadow-2xl m-4 w-full max-w-2xl overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-start">
+                    <h2 id="modal-title" class="text-2xl font-bold text-[#2C5E4A] mb-4"></h2>
+                    <button id="close-modal" class="text-gray-400 hover:text-gray-600">&times;</button>
+                </div>
+                <div id="modal-body" class="prose max-w-none text-gray-700"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const activities = [
+            {
+                id: 1,
+                title: 'Swimming Lessons - Optisport',
+                category: 'Sport',
+                cost: 63.95,
+                diploma: true,
+                age: 'From 4/5 years',
+                location: 'J.S. Bachweg 3',
+                distance: '~1.9 km from Muziekwijk',
+                summary: 'Extensive "Zed & Sop Swimming Lessons" programs for essential swimming skills and water safety. Regular and Turbo options available.',
+                details: `
+                    <p><strong>Program:</strong> Optisport offers "Zed & Sop Swimming Lessons" for a safe and fun learning experience. They provide both regular lessons and an accelerated "Turbo" program.</p>
+                    <p><strong>Age:</strong> Regular lessons from 4 years, Turbo lessons from 5 years. Both very suitable for 9-year-olds.</p>
+                    <p><strong>Schedule:</strong> Regular lessons are 1x per week, 45 min. Turbo lessons are 1x per week, 90 min (starting Sept 2025).</p>
+                    <p><strong>Costs:</strong> Regular: €63.95/month. Turbo: €1275,- for a 7-month package (incl. exam). Starter package: €42.50. Subsidies via Jeugdfonds Sport & Cultuur are possible.</p>
+                    <p><strong>Diploma:</strong> Clear path to A, B, and C diplomas, with a diploma guarantee for the Turbo program.</p>
+                    <p><strong>Contact:</strong> Phone: 036-5302314, Email: almerestad-receptie@optisport.nl</p>
+                `
+            },
+            {
+                id: 2,
+                title: 'Swimming Lessons - Van Rheenen Sport',
+                category: 'Sport',
+                cost: 31.50,
+                diploma: true,
+                age: 'From 3 years (special 8+ lessons)',
+                location: 'Marathonlaan 10',
+                distance: 'Almere Stad',
+                summary: 'ZwemABC lessons according to Dutch Swimming Federation standards in small groups with qualified instructors.',
+                details: `
+                    <p><strong>Program:</strong> Lessons according to the ZwemABC curriculum of the Dutch Swimming Federation, with a focus on small groups.</p>
+                    <p><strong>Age:</strong> From 3 years, with special 8+ swimming lessons perfect for 9-year-olds.</p>
+                    <p><strong>Schedule:</strong> Weekly. Contact for specific times.</p>
+                    <p><strong>Costs:</strong> From €31.50/month. Registration fee: €25. After registration, placed on a waiting list.</p>
+                    <p><strong>Diploma:</strong> ZwemABC diplomas (NRZ-license) with a 100% success rate. Progression to Swimming Proficiency possible.</p>
+                    <p><strong>Contact:</strong> Phone: 036-5347131, Email: zwemonderwijs@vanrheenensport.nl</p>
+                `
+            },
+            {
+                id: 3,
+                title: 'Warrior Skillz Empowerment',
+                category: 'Sport',
+                cost: 39.70,
+                diploma: true,
+                age: '7-9 & 10-12 years',
+                location: 'Slufterplantsoen 10',
+                distance: '~4.9 km from Muziekwijk',
+                summary: 'A 10-week program to build self-confidence and social skills through play and self-defense techniques.',
+                details: `
+                    <p><strong>Program:</strong> "Unleash The Warrior" is a 10-week course for self-confidence, social skills, and dealing with bullying. Includes workbook.</p>
+                    <p><strong>Age:</strong> Relevant groups for 7-9 years and 10-12 years.</p>
+                    <p><strong>Schedule:</strong> Fixed 10-week terms. Example: Monday 17:00-17:50. Specific dates via website.</p>
+                    <p><strong>Costs:</strong> €397,- per program (calculated over 10 weeks). Groups of 4-12 participants.</p>
+                    <p><strong>Diploma:</strong> Certificate of participation. 100% satisfaction guarantee.</p>
+                    <p><strong>Contact:</strong> Email: Info@warrioracademy.nl</p>
+                `
+            },
+            {
+                id: 4,
+                title: 'After-school sports - AKT',
+                category: 'Sport',
+                cost: 0,
+                diploma: false,
+                age: 'Groep 3 to 8',
+                location: 'Various locations in Almere Stad',
+                distance: 'All within 5km',
+                summary: 'Free after-school gym and sports lessons to promote movement and motor skills.',
+                details: `
+                    <p><strong>Program:</strong> Free programs such as Gym+, Sport+, KidsXtra, and ASM Academy.</p>
+                    <p><strong>Age:</strong> Groep 3 to 8, so perfect for 9-year-olds (Groep 6).</p>
+                    <p><strong>Schedule:</strong> Weekly at various locations. Example: Monday 15:00-16:00 in Noorderplassen, Thursday 15:30-16:30 in Stad West.</p>
+                    <p><strong>Costs:</strong> Free.</p>
+                    <p><strong>Diploma:</strong> No formal diplomas, focus on development.</p>
+                    <p><strong>Registration:</strong> Via sportencultuur.almere.nl. Limited spots, sometimes invitation from gym teacher needed.</p>
+                    <p><strong>Contact:</strong> Via website (Ms. Joandy)</p>
+                `
+            },
+            {
+                id: 5,
+                title: 'Scouting - Con Tutti',
+                category: 'Community',
+                cost: null,
+                diploma: false,
+                age: '4-14+ years',
+                location: 'Pianoweg 117',
+                distance: '~0.7 km from Muziekwijk',
+                summary: 'A healthy, social, and challenging environment with outdoor activities, focused on teamwork and self-reliance.',
+                details: `
+                    <p><strong>Program:</strong> Scouting offers a holistic approach to personal development through outdoor activities and cooperation.</p>
+                    <p><strong>Age:</strong> Broad, including 9-year-olds.</p>
+                    <p><strong>Schedule:</strong> Saturdays from 11:00-21:00. Contact for specific times for 9-year-olds.</p>
+                    <p><strong>Costs:</strong> Not specified, please contact.</p>
+                    <p><strong>Diploma:</strong> No formal diplomas, focus on character building and practical skills.</p>
+                    <p><strong>Contact:</strong> Phone: 036-5398233, Email: contutti-scouts@ldhscouting.nl</p>
+                `
+            },
+            {
+                id: 6,
+                title: 'Piano Lessons - Kunstvol',
+                category: 'Art & Music',
+                cost: 83.33,
+                diploma: false,
+                age: '6-18 years',
+                location: 'Stadhuisplein 2',
+                distance: '~2.2 km from Muziekwijk',
+                summary: 'Comprehensive piano lessons (individual or group) covering music theory, technique, and even songwriting.',
+                details: `
+                    <p><strong>Program:</strong> Individual, duo, or group lessons over a full school year. Includes theory, technique, sight-reading, and improvisation.</p>
+                    <p><strong>Age:</strong> 6 to 18 years.</p>
+                    <p><strong>Schedule:</strong> Lessons on Mon, Tue, Wed, Thu, Sat, Sun. Starts school year, but later entry possible.</p>
+                    <p><strong>Costs:</strong> €1000,- per school year (approx. €83.33/month). Significant subsidies possible via Jeugdfonds Sport & Cultuur (€520).</p>
+                    <p><strong>Diploma:</strong> No formal diploma, but a structured learning plan with clear progression.</p>
+                    <p><strong>Contact:</strong> Email: info@vvflex.nl</p>
+                `
+            },
+            {
+                id: 7,
+                title: 'Dance Class - Dance Yard Studio',
+                category: 'Art & Music',
+                cost: 27,
+                diploma: false,
+                age: '6-10 years',
+                location: 'Xenonstraat 77',
+                distance: '~3.4 km from Muziekwijk',
+                summary: 'Fun "Kids Dance", "Show/musical" and "Demo streetdance" classes with a clear price structure and free trial lesson.',
+                details: `
+                    <p><strong>Program:</strong> Various dance styles for children, including Kids Dance (6-10), Show/musical (6-9) and Demo streetdance (6-10).</p>
+                    <p><strong>Age:</strong> Perfectly suitable for 9-year-olds.</p>
+                    <p><strong>Schedule:</strong> Weekly. Contact for the timetable. Specific times for 2024-2025 season available (e.g. Show/musical 10:45-11:30u).</p>
+                    <p><strong>Costs:</strong> From €27/month for 1 lesson per week. One-time €10 registration fee. Subsidies via Jeugdfonds Sport & Cultuur are possible.</p>
+                    <p><strong>Diploma:</strong> No formal diploma, progression through skill levels.</p>
+                    <p><strong>Registration:</strong> Free trial lesson available. Register via the website.</p>
+                    <p><strong>Contact:</strong> Email: info@danceyardstudio.nl, Phone: +31 6 23 28 98 17</p>
+                `
+            },
+            {
+                id: 8,
+                title: 'Chess - Schaakvereniging Almere',
+                category: 'Community',
+                cost: null,
+                diploma: true,
+                age: 'From 6 years',
+                location: 'Sas van Gentlaan 10-12',
+                distance: '~2.2 km from Muziekwijk',
+                summary: 'Youth chess program with lessons using the "Stappenmethode" and the possibility to take exams.',
+                details: `
+                    <p><strong>Program:</strong> Structured chess lessons for youth using the recognized "Stappenmethode" and participation in competitions.</p>
+                    <p><strong>Age:</strong> From 6 years.</p>
+                    <p><strong>Schedule:</strong> Club evenings on Monday from 18:45-19:45.</p>
+                    <p><strong>Costs:</strong> Not specified, please contact.</p>
+                    <p><strong>Diploma:</strong> Structured progression with "Exams," implying a form of certification within the chess framework.</p>
+                    <p><strong>Contact:</strong> Email: p.groot@hetbaken.nl</p>
+                `
+            },
+             {
+                id: 9,
+                title: 'Art & Nature - BuurT-Thuis Akwaaba',
+                category: 'Community',
+                cost: null,
+                diploma: false,
+                age: '5-12 years',
+                location: 'Estafette laan 17',
+                distance: 'Almere Stad',
+                summary: 'Inspiring, creative, and intercultural workshops, from Survival Art to kids yoga and shadow stories.',
+                details: `
+                    <p><strong>Program:</strong> Transcultural children & family center with various workshops such as Survival Art (fire making), Sand Over It (mandalas), Body Language (kids yoga) and more.</p>
+                    <p><strong>Age:</strong> Target group 5-12 years.</p>
+                    <p><strong>Schedule:</strong> Open daily for walk-ins 10:00-16:00. Workshops during and after school hours. Contact for specific times.</p>
+                    <p><strong>Costs:</strong> Not specified, please contact.</p>
+                    <p><strong>Diploma:</strong> No formal diploma, but focus on creative, practical, and intercultural skills.</p>
+                    <p><strong>Contact:</strong> Email: info@inspiratie-inc.nl, Phone: +31 6 3737 5343</p>
+                `
+            },
+            {
+                id: 10,
+                title: 'Dance Class - MJ School of Dance',
+                category: 'Art & Music',
+                cost: null,
+                diploma: false,
+                age: '8-18 years',
+                location: 'Gipskruidweg 46',
+                distance: '~2.5 km from Muziekwijk',
+                summary: 'Regular dance classes in Indian Bollywood, Salsa, Jazz, Hip Hop, and Zumba.',
+                details: `
+                    <p><strong>Program:</strong> Various dance styles for teenagers, including Indian Bollywood (Indian contemporary, Bhangra), Salsa, Jazz, Freestyle, Hip Hop, and Zumba.</p>
+                    <p><strong>Age:</strong> Specifically for teenagers aged 8 to 18, suitable for 9-year-olds.</p>
+                    <p><strong>Schedule:</strong> Regular weekly classes. Options like "Almere Teens Saturday" and "Almere Teens Monday" available. Specific times via contact.</p>
+                    <p><strong>Costs:</strong> Not specified for the Almere location, please contact for current prices.</p>
+                    <p><strong>Diploma:</strong> No formal diploma, focus on continuous skill development.</p>
+                    <p><strong>Registration:</strong> Mandatory online registration via the student portal.</p>
+                    <p><strong>Contact:</strong> Email: mjschoolofdance@gmail.com, Phone: 0619990750</p>
+                `
+            },
+            {
+                id: 11,
+                title: 'Visual Arts - Luna Nguyen Atelier',
+                category: 'Art & Music',
+                cost: null,
+                diploma: false,
+                age: 'For children (6+ for workshops)',
+                location: 'Spoordreef 20 36',
+                distance: '~2.6 km from Muziekwijk',
+                summary: 'Drawing and painting lessons and creative art workshops, adaptable to individual goals.',
+                details: `
+                    <p><strong>Program:</strong> Drawing and painting lessons for children, and various creative art workshops such as "Drawing workshop 6+".</p>
+                    <p><strong>Age:</strong> General for children, with specific workshops from 6 years, thus suitable for 9-year-olds.</p>
+                    <p><strong>Schedule:</strong> Weekly activities listed as occurring on Mondays, Wednesdays, Thursdays, Fridays, and Saturdays from 15:45 - 16:45.</p>
+                    <p><strong>Costs:</strong> Not specified, please contact.</p>
+                    <p><strong>Diploma:</strong> No formal diploma, focus on promoting creativity and artistic skills.</p>
+                    <p><strong>Note:</strong> Closed for Summer holiday from July 12 to August 24, 2025.</p>
+                    <p><strong>Registration:</strong> Possibility for trial class and registration via contact form or direct contact.</p>
+                    <p><strong>Contact:</strong> Phone: 0657512853</p>
+                `
+            },
+            {
+                id: 12,
+                title: 'Music - Hubertus Almere Training Orchestra',
+                category: 'Art & Music',
+                cost: null,
+                diploma: false,
+                age: 'From 8 years',
+                location: 'Community Center De Draaikolk, Lekstraat 2',
+                distance: '~4.5 km from Muziekwijk',
+                summary: 'Training orchestra for beginners to make music together in a friendly atmosphere.',
+                details: `
+                    <p><strong>Program:</strong> Special "Training Orchestra" for beginners on an instrument, focused on making music together in a supportive atmosphere.</p>
+                    <p><strong>Age:</strong> Open to children from 8 years, teenagers, and adults who are beginners or returning to an instrument.</p>
+                    <p><strong>Schedule:</strong> Rehearsals on Tuesday evenings. Specific times not detailed, please contact.</p>
+                    <p><strong>Costs:</strong> Not specified, please contact.</p>
+                    <p><strong>Diploma:</strong> No formal diploma, but continuous musical development and ensemble experience.</p>
+                    <p><strong>Registration:</strong> Possibility for private or group lessons through the association.</p>
+                    <p><strong>Contact:</strong> Email: secretaris@hubertus-almere.nl</p>
+                `
+            },
+            {
+                id: 13,
+                title: 'Music - Zangschool Almere (Singing School)',
+                category: 'Art & Music',
+                cost: 27.50,
+                diploma: false,
+                age: 'For adults and children',
+                location: 'Various locations in Almere',
+                distance: '~0.9 km from search area (example)',
+                summary: 'Singing lessons for beginners and advanced students, tailored to personal musical interests.',
+                details: `
+                    <p><strong>Program:</strong> Singing lessons led by professional teachers, aimed at improving singing technique and personal musical interests.</p>
+                    <p><strong>Age:</strong> Suitable for both adults and children, including 9-year-olds. All levels, from beginner to advanced.</p>
+                    <p><strong>Schedule:</strong> Flexible start throughout the year. Lessons available on various days (e.g., Wednesday, Thursday, Friday).</p>
+                    <p><strong>Costs:</strong> For example, €27.50 per 30-minute lesson (individual teacher's price). One-time registration fee may apply.</p>
+                    <p><strong>Diploma:</strong> No formal diploma, but structured progression in singing skills.</p>
+                    <p><strong>Registration:</strong> Possibility to book a trial lesson online. One-month notice period for cancellation.</p>
+                    <p><strong>Contact:</strong> Direct contact with the teacher or via the School of Music's contact form.</p>
+                `
+            },
+            {
+                id: 14,
+                title: 'Community - De Bazuin Teen Drop-in',
+                category: 'Community',
+                cost: 0,
+                diploma: false,
+                age: '10-16 years (Note: slightly older than 9)',
+                location: 'Luitstraat 1',
+                distance: 'Directly in Muziekwijk',
+                summary: 'Informal meeting place for young people to socialize, play games, and talk with youth workers.',
+                details: `
+                    <p><strong>Program:</strong> An informal "Teen Drop-in" where young people can gather, play Playstation, Nintendo Switch, card and board games, and connect with youth workers for informal guidance and support.</p>
+                    <p><strong>Age:</strong> Specifically designed for 10-16 years. Note: this is slightly older than 9 years, but may be relevant for older siblings or future consideration.</p>
+                    <p><strong>Schedule:</strong> Every Wednesday afternoon, from 14:00-16:00.</p>
+                    <p><strong>Costs:</strong> Likely free, as it is a drop-in from a community center.</p>
+                    <p><strong>Diploma:</strong> No formal diploma, focus on social interaction and community building.</p>
+                    <p><strong>Registration:</strong> No specific registration mentioned, functions as an open drop-in.</p>
+                    <p><strong>Contact:</strong> Phone: 036-5363386, Email: bazuin@deschoor.nl</p>
+                `
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const grid = document.getElementById('activity-grid');
+            const noResults = document.getElementById('no-results');
+            const typeFilter = document.getElementById('type-filter');
+            const costFilter = document.getElementById('cost-filter');
+            const diplomaFilter = document.getElementById('diploma-filter');
+            const modal = document.getElementById('modal');
+            const closeModal = document.getElementById('close-modal');
+
+            let currentFilters = {
+                type: 'all',
+                cost: 'all',
+                diploma: 'all'
+            };
+
+            const createActivityCard = (activity) => {
+                const costText = activity.cost === 0 ? 'Free' : activity.cost ? `~€${activity.cost.toFixed(2)}/month` : 'Inquire for info';
+                const card = document.createElement('div');
+                card.className = 'activity-card bg-white rounded-lg shadow-md overflow-hidden cursor-pointer';
+                card.innerHTML = `
+                    <div class="p-6">
+                        <div class="flex justify-between items-start">
+                             <span class="text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded-full ${activity.category === 'Sport' ? 'bg-blue-100 text-blue-800' : activity.category === 'Art & Music' ? 'bg-pink-100 text-pink-800' : 'bg-green-100 text-green-800'}">${activity.category}</span>
+                             ${activity.diploma ? '<span title="Offers diploma/certificate">🏆</span>' : ''}
+                        </div>
+                        <h3 class="font-bold text-xl mt-3 mb-2 text-gray-800">${activity.title}</h3>
+                        <p class="text-gray-600 text-sm mb-4">${activity.summary}</p>
+                        <div class="flex justify-between items-center text-sm text-gray-500 border-t pt-4">
+                            <span>${activity.age}</span>
+                            <span class="font-semibold">${costText}</span>
+                        </div>
+                    </div>
+                `;
+                card.addEventListener('click', () => openModal(activity));
+                return card;
+            };
+
+            const renderActivities = () => {
+                grid.innerHTML = '';
+                let hasResults = false;
+                activities
+                    .filter(a => {
+                        const typeMatch = currentFilters.type === 'all' || a.category === currentFilters.type;
+                        
+                        const costMatch = currentFilters.cost === 'all' ||
+                            (currentFilters.cost === 'free' && a.cost === 0) ||
+                            (currentFilters.cost === 'low' && a.cost !== null && a.cost > 0 && a.cost < 50) ||
+                            (currentFilters.cost === 'medium' && a.cost !== null && a.cost >= 50) ||
+                            (currentFilters.cost === 'unknown' && a.cost === null);
+
+                        const diplomaMatch = currentFilters.diploma === 'all' ||
+                            (currentFilters.diploma === 'yes' && a.diploma) ||
+                            (currentFilters.diploma === 'no' && !a.diploma);
+
+                        return typeMatch && costMatch && diplomaMatch;
+                    })
+                    .forEach(activity => {
+                        hasResults = true;
+                        grid.appendChild(createActivityCard(activity));
+                    });
+                noResults.classList.toggle('hidden', hasResults);
+            };
+            
+            const openModal = (activity) => {
+                document.getElementById('modal-title').innerText = activity.title;
+                document.getElementById('modal-body').innerHTML = `
+                    <div class="mb-4 space-y-2">
+                        <p><strong>Category:</strong> ${activity.category}</p>
+                        <p><strong>Location:</strong> ${activity.location} (${activity.distance})</p>
+                        <p><strong>Age Suitability:</strong> ${activity.age}</p>
+                    </div>
+                    ${activity.details}
+                `;
+                modal.style.display = 'flex';
+            };
+            
+            closeModal.addEventListener('click', () => modal.style.display = 'none');
+            window.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+
+            const setupFilter = (filterContainer, filterKey) => {
+                 filterContainer.addEventListener('click', e => {
+                    if (e.target.tagName === 'BUTTON') {
+                        currentFilters[filterKey] = e.target.dataset.filter;
+                        filterContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                        e.target.classList.add('active');
+                        renderActivities();
+                    }
+                });
+            };
+
+            setupFilter(typeFilter, 'type');
+            setupFilter(costFilter, 'cost');
+            setupFilter(diplomaFilter, 'diploma');
+
+            const wrapLabel = (str, maxWidth) => {
+                if (!str || str.length <= maxWidth) return str;
+                const words = str.split(' ');
+                let lines = []; let currentLine = '';
+                for (const word of words) {
+                    if ((currentLine + ' ' + word).trim().length > maxWidth) {
+                        lines.push(currentLine.trim()); currentLine = word;
+                    } else { currentLine = (currentLine + ' ' + word).trim(); }
+                }
+                if (currentLine) lines.push(currentLine.trim());
+                return lines;
+            };
+
+            const tooltipTitleCallback = (tooltipItems) => {
+                const item = tooltipItems[0];
+                let label = item.chart.data.labels[item.dataIndex];
+                return Array.isArray(label) ? label.join(' ') : label;
+            };
+
+            const sharedChartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: { title: tooltipTitleCallback },
+                        backgroundColor: '#4A4A4A',
+                        titleFont: { size: 14 },
+                        bodyFont: { size: 12 },
+                        padding: 10,
+                        cornerRadius: 4
+                    }
+                }
+            };
+            
+            const categoryChartCtx = document.getElementById('categoryChart').getContext('2d');
+            const categoryData = activities.reduce((acc, curr) => {
+                acc[curr.category] = (acc[curr.category] || 0) + 1;
+                return acc;
+            }, {});
+            new Chart(categoryChartCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categoryData),
+                    datasets: [{
+                        data: Object.values(categoryData),
+                        backgroundColor: ['#7BAF9E', '#A8D5BA', '#E9E4D4'],
+                        borderColor: '#F8F7F4',
+                        borderWidth: 4,
+                    }]
+                },
+                options: { ...sharedChartOptions, cutout: '60%', plugins: {...sharedChartOptions.plugins, legend: {display: true, position: 'bottom'}} }
+            });
+
+            const costChartCtx = document.getElementById('costChart').getContext('2d');
+            const costData = {
+                'Free': activities.filter(a => a.cost === 0).length,
+                '< €50/month': activities.filter(a => a.cost !== null && a.cost > 0 && a.cost < 50).length,
+                '> €50/month': activities.filter(a => a.cost !== null && a.cost >= 50).length,
+                'Inquire for info': activities.filter(a => a.cost === null).length,
+            };
+            new Chart(costChartCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(costData),
+                    datasets: [{
+                        label: 'Number of Activities',
+                        data: Object.values(costData),
+                        backgroundColor: ['#A8D5BA', '#7BAF9E', '#568B79', '#E9E4D4'],
+                    }]
+                },
+                options: {
+                    ...sharedChartOptions,
+                    indexAxis: 'y',
+                    scales: {
+                        x: { beginAtZero: true, grid: { display: false } },
+                        y: { grid: { display: false } }
+                    },
+                }
+            });
+            
+            renderActivities();
+        });
+    </script>
+</body>
+</html>
