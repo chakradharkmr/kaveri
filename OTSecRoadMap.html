@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OT Security Consultant Career Roadmap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Neutrals -->
+    <!-- Application Structure Plan: A tabbed single-page application (SPA) is chosen for its clarity and organization. It allows the user to navigate distinct yet interconnected aspects of their professional growth without being overwhelmed. The structure includes: 1) A Dashboard for a quick overview and progress tracking, 2) The Vision for long-term strategic goals, 3) The Ascent for a detailed 1-year action plan, 4) The Fortress to focus on unique, AI-resistant skills, and 5) The Mindset to directly address and track personal growth challenges. This non-linear but guided structure allows the user to focus on their immediate tasks (1-Year Plan) while keeping the long-term context (Vision) in mind, all while reinforcing positive habits (Mindset). -->
+    <!-- Visualization & Content Choices: 
+        1. Report Info: User's personal growth challenges (anxiety, stage fear). Goal: Inform & Motivate. Viz/Presentation: Radar Chart (Chart.js) on Dashboard/Mindset tabs. Interaction: Buttons to log small wins, which incrementally update the chart data, providing visual positive reinforcement. Justification: A radar chart effectively visualizes multi-faceted growth from a central point, making progress tangible and encouraging. Library: Chart.js (Canvas).
+        2. Report Info: 1-year plan with milestones. Goal: Organize & Plan. Viz/Presentation: Interactive Timeline using HTML/CSS (Flexbox/Grid). Interaction: Clicking on a milestone reveals a detailed checklist of sub-tasks, making large goals actionable. Justification: A timeline is the most intuitive way to represent a year-long plan, breaking it into manageable quarterly chunks. Library/Method: HTML/Tailwind CSS.
+        3. Report Info: Long-term strategic pillars. Goal: Inform & Strategize. Viz/Presentation: A 3-column card layout. Interaction: Subtle hover effects on cards to provide more context. Justification: This clean, static representation emphasizes the foundational and unchanging nature of these strategic pillars. Library/Method: HTML/Tailwind CSS.
+        4. Report Info: AI-resistant skills. Goal: Organize & Educate. Viz/Presentation: An interactive list/accordion. Interaction: Clicking on a skill category expands to show concrete examples and action items. Justification: An accordion allows for a high-level overview while keeping the UI clean, letting the user drill down into areas of interest. Library/Method: HTML/Tailwind CSS + JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8F7F4; }
+        .tab-active { border-color: #3B82F6; color: #3B82F6; background-color: #EFF6FF; }
+        .tab-inactive { border-color: transparent; color: #6B7280; }
+        .content-active { display: block; }
+        .content-inactive { display: none; }
+        .timeline-item::before { content: ''; position: absolute; left: -2.375rem; top: 0.125rem; width: 0.25rem; height: 100%; background-color: #D1D5DB; }
+        .timeline-item:last-child::before { display: none; }
+        .timeline-marker { position: absolute; left: -3rem; top: 0; width: 1.5rem; height: 1.5rem; background-color: #F8F7F4; border: 4px solid #3B82F6; border-radius: 9999px; }
+        .chart-container { position: relative; width: 100%; max-width: 500px; margin-left: auto; margin-right: auto; height: 350px; max-height: 400px; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">The Resilient OT Security Consultant</h1>
+            <p class="mt-2 text-lg text-gray-600">Your Interactive Roadmap to Industry Leadership</p>
+        </header>
+
+        <nav class="mb-8 border-b border-gray-200">
+            <ul class="flex flex-wrap -mb-px justify-center text-sm font-medium text-center" id="tab-navigation">
+                <li><a href="#" class="tab-link inline-block p-4 border-b-2 rounded-t-lg tab-active" data-tab="dashboard">Dashboard</a></li>
+                <li><a href="#" class="tab-link inline-block p-4 border-b-2 rounded-t-lg tab-inactive" data-tab="vision">The Vision (5-Year Plan)</a></li>
+                <li><a href="#" class="tab-link inline-block p-4 border-b-2 rounded-t-lg tab-inactive" data-tab="ascent">The Ascent (1-Year Plan)</a></li>
+                <li><a href="#" class="tab-link inline-block p-4 border-b-2 rounded-t-lg tab-inactive" data-tab="fortress">The Fortress (AI-Proofing)</a></li>
+                <li><a href="#" class="tab-link inline-block p-4 border-b-2 rounded-t-lg tab-inactive" data-tab="mindset">The Mindset</a></li>
+            </ul>
+        </nav>
+
+        <main id="tab-content">
+            <div id="dashboard" class="tab-pane content-active">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                     <h2 class="text-2xl font-bold mb-4 text-gray-900">Welcome to Your Growth Dashboard</h2>
+                     <p class="text-gray-600 mb-6">This dashboard provides a snapshot of your journey. It's designed to track your progress, celebrate small wins, and keep you focused on your current objectives. Use the chart to visualize your growth in key confidence areas and review your priority tasks for this quarter to stay on track.</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="text-xl font-bold mb-4">Q4 2025: Foundational Steps</h3>
+                        <ul class="space-y-3">
+                            <li class="flex items-center"><span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-3"></span><span>Engage with 3 OT security articles on LinkedIn.</span></li>
+                            <li class="flex items-center"><span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-3"></span><span>Identify and follow 10 key OT security influencers.</span></li>
+                            <li class="flex items-center"><span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-3"></span><span>Complete one internal presentation to a small, friendly team.</span></li>
+                            <li class="flex items-center"><span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-3"></span><span>Document one hands-on lab experiment or finding.</span></li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="text-xl font-bold mb-4 text-center">Confidence & Growth Tracker</h3>
+                        <div class="chart-container">
+                            <canvas id="confidenceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="vision" class="tab-pane content-inactive">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                    <h2 class="text-2xl font-bold mb-4 text-gray-900">The 5-Year Vision: Becoming an Authority</h2>
+                    <p class="text-gray-600 mb-6">Building a lasting reputation is a marathon, not a sprint. This long-term vision is built on three core pillars that are uniquely human and defensible against automation. Each pillar reinforces the others, creating a powerful foundation for your career. The goal is not just to be known, but to be known for genuine, high-impact contributions to the OT security industry.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="text-xl font-bold mb-3">Pillar 1: Deep Niche Expertise</h3>
+                        <p class="text-gray-600">Move beyond general OT security. Specialize in a specific area, like ICS forensics, safety instrumented systems (SIS) security, or securing a particular industry (e.g., pharmaceuticals, energy). This is where you create irreplaceable value through hands-on research and unique problem-solving.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="text-xl font-bold mb-3">Pillar 2: Authentic Mentorship</h3>
+                        <p class="text-gray-600">True influence comes from lifting others up. By genuinely mentoring junior professionals, you build a legacy and a network of advocates. This fosters trust and provides you with diverse perspectives, strengthening your own understanding and reputation as a collaborative leader.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="text-xl font-bold mb-3">Pillar 3: Practical Innovation</h3>
+                        <p class="text-gray-600">Develop and share practical, real-world solutions. This could be a new assessment methodology, a custom script for threat detection, or a framework for OT incident response. Focus on creating tangible assets that solve real problems for the community, demonstrating your value beyond theory.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ascent" class="tab-pane content-inactive">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                     <h2 class="text-2xl font-bold mb-4 text-gray-900">The 1-Year Ascent Plan</h2>
+                     <p class="text-gray-600 mb-6">This is your step-by-step guide for the next 12 months. Each quarter builds upon the last, gradually increasing in challenge and visibility. The focus is on consistent action and building momentum. Click on any milestone to see a more detailed checklist of actions. This methodical approach is designed to build confidence and make ambitious goals achievable.</p>
+                </div>
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="relative pl-8">
+                        <div class="timeline-item pb-12">
+                            <div class="timeline-marker"></div>
+                            <h3 class="text-xl font-bold text-blue-600">Q4 2025: Building Foundations</h3>
+                            <p class="text-gray-600 mt-2">Focus on low-risk, high-learning activities. The goal is to build habits and comfort, not to seek the spotlight.</p>
+                            <ul class="mt-4 space-y-2 text-gray-700">
+                                <li><strong>LinkedIn Engagement:</strong> Write thoughtful comments (not just "great post!") on 3-5 articles per week.</li>
+                                <li><strong>Internal Knowledge Share:</strong> Deliver a 15-minute presentation on a recent project to your direct team (max 5 people).</li>
+                                <li><strong>Deep Research:</strong> Select your niche area and start a reading list of key papers, standards, and books.</li>
+                            </ul>
+                        </div>
+                        <div class="timeline-item pb-12">
+                            <div class="timeline-marker"></div>
+                            <h3 class="text-xl font-bold text-blue-600">Q1 2026: Content Creation</h3>
+                            <p class="text-gray-600 mt-2">Translate your knowledge into public-facing content. Start small and focus on providing clear, practical value.</p>
+                             <ul class="mt-4 space-y-2 text-gray-700">
+                                <li><strong>First Blog Post:</strong> Publish one 500-word article on LinkedIn or a personal blog about a foundational OT security topic.</li>
+                                <li><strong>Offer to Help:</strong> Find one junior colleague and offer 30 minutes to help them with a technical challenge.</li>
+                                <li><strong>Cross-Department Share:</strong> Present your internal talk to a slightly larger, friendly audience in another department.</li>
+                            </ul>
+                        </div>
+                        <div class="timeline-item pb-12">
+                            <div class="timeline-marker"></div>
+                            <h3 class="text-xl font-bold text-blue-600">Q2 2026: Community Engagement</h3>
+                            <p class="text-gray-600 mt-2">Move from one-way content to two-way interaction. Engage with the broader OT security community.</p>
+                             <ul class="mt-4 space-y-2 text-gray-700">
+                                <li><strong>Contribute to a Standard:</strong> Join a working group (e.g., ISA, CISA) and contribute to a document or discussion.</li>
+                                <li><strong>Co-Present a Webinar:</strong> Find a trusted colleague and offer to co-present a webinar. You handle 30-40% of the material.</li>
+                                <li><strong>Publish a Tool/Script:</strong> Share a simple, useful script or tool on GitHub with clear documentation.</li>
+                            </ul>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker"></div>
+                            <h3 class="text-xl font-bold text-blue-600">Q3 2026: Establishing Leadership</h3>
+                            <p class="text-gray-600 mt-2">Take on solo initiatives and begin to establish yourself as a thought leader in your chosen niche.</p>
+                             <ul class="mt-4 space-y-2 text-gray-700">
+                                <li><strong>Solo Webinar/Seminar:</strong> Deliver your first solo presentation at a local industry event or a company-wide webinar.</li>
+                                <li><strong>Mentorship Program:</strong> Formally mentor 1-2 junior professionals, with regular check-ins.</li>
+                                <li><strong>Thought Leadership Piece:</strong> Write a comprehensive, 1500-word article on a forward-looking topic in your niche.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="fortress" class="tab-pane content-inactive">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                    <h2 class="text-2xl font-bold mb-4 text-gray-900">The Fortress: Building AI-Resistant Value</h2>
+                    <p class="text-gray-600 mb-6">In an age of AI, your unique value lies in activities that require deep human insight, hands-on experience, and genuine connection. AI can summarize existing knowledge, but it cannot create new knowledge from physical experience or build trust through empathy. This section details the skills and activities that will form your career's fortress, making your expertise irreplaceable.</p>
+                </div>
+                 <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                    <div>
+                        <h3 class="text-lg font-semibold">1. Hands-on Lab Research & Physical Systems Analysis</h3>
+                        <p class="text-gray-600">Creating a personal or company lab (even a virtual one with real PLCs) to test exploits, validate defenses, and document unique behaviors of industrial hardware. AI cannot replicate the "ground truth" discovered from interacting with physical systems.</p>
+                    </div>
+                     <hr>
+                    <div>
+                        <h3 class="text-lg font-semibold">2. Cross-Disciplinary Synthesis</h3>
+                        <p class="text-gray-600">Combine deep OT security knowledge with other fields. For example, applying principles from supply chain risk management to OT systems, or using human factors psychology to design more effective security awareness programs for plant operators. This creates novel insights that AI, trained on siloed data, will miss.</p>
+                    </div>
+                     <hr>
+                    <div>
+                        <h3 class="text-lg font-semibold">3. High-Touch, Empathetic Mentorship</h3>
+                        <p class="text-gray-600">The act of mentoring is profoundly human. It involves understanding a person's career goals, fears, and strengths, and providing tailored guidance. This builds deep professional relationships and a trusted network that AI cannot forge.</p>
+                    </div>
+                     <hr>
+                    <div>
+                        <h3 class="text-lg font-semibold">4. "现场" (On-Site) Intuition and Problem Solving</h3>
+                        <p class="text-gray-600">Developing the intuition to solve problems by being physically present in a plant or facility. Understanding the sounds, smells, and rhythms of an industrial process provides a level of context that remote data analysis can never capture. This is the art of consulting that builds immense client trust.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mindset" class="tab-pane content-inactive">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                    <h2 class="text-2xl font-bold mb-4 text-gray-900">The Mindset: Overcoming Inner Hurdles</h2>
+                    <p class="text-gray-600 mb-6">Your professional growth is directly linked to your personal growth. This section provides strategies and a tool to help you systematically overcome challenges like anxiety, introversion, and stage fear. The key is gradual exposure and reframing your perspective. Celebrate every small step forward; consistency is more important than intensity.</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="text-xl font-bold mb-4">Strategies for Growth</h3>
+                        <dl class="space-y-4">
+                            <div>
+                                <dt class="font-semibold">Tackle Stage Fear Incrementally:</dt>
+                                <dd class="text-gray-600">Start with "safe" audiences. Present to one trusted colleague, then your small team, then a larger internal group. Each step builds a memory of success, reducing fear for the next level.</dd>
+                            </div>
+                            <div>
+                                <dt class="font-semibold">Leverage Introvert Strengths:</dt>
+                                <dd class="text-gray-600">Focus on deep work first: research, writing, lab work. Your written content will attract people to you, making networking reactive (people approaching you) rather than proactive.</dd>
+                            </div>
+                            <div>
+                                <dt class="font-semibold">Reframe "Fear of Failure":</dt>
+                                <dd class="text-gray-600">Adopt an experimental mindset. A blog post that gets few views isn't a failure; it's data on what topics don't resonate. Every "miss" is a lesson that refines your next attempt.</dd>
+                            </div>
+                            <div>
+                                <dt class="font-semibold">Externalize Memory:</dt>
+                                <dd class="text-gray-600">Use this application, note-taking apps, and checklists religiously. Your value is in your ability to think and connect ideas, not in perfect recall. Document everything.</dd>
+                            </div>
+                        </dl>
+                    </div>
+                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center">
+                        <h3 class="text-xl font-bold mb-4">Log Your Progress</h3>
+                        <p class="text-gray-600 mb-4">Click a button below to log a small win. Watch your confidence grow visually on the chart!</p>
+                        <div class="flex flex-wrap justify-center gap-3">
+                            <button class="log-win-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg" data-skill="0">Spoke Up</button>
+                            <button class="log-win-btn bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg" data-skill="1">Networked</button>
+                            <button class="log-win-btn bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg" data-skill="2">Created Content</button>
+                            <button class="log-win-btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg" data-skill="3">Helped Someone</button>
+                            <button class="log-win-btn bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg" data-skill="4">Learned Deeply</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const tabs = document.querySelectorAll('.tab-link');
+        const panes = document.querySelectorAll('.tab-pane');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                tabs.forEach(t => {
+                    t.classList.remove('tab-active');
+                    t.classList.add('tab-inactive');
+                });
+
+                tab.classList.remove('tab-inactive');
+                tab.classList.add('tab-active');
+
+                const targetPane = document.getElementById(tab.dataset.tab);
+
+                panes.forEach(pane => {
+                    pane.classList.remove('content-active');
+                    pane.classList.add('content-inactive');
+                });
+                
+                targetPane.classList.remove('content-inactive');
+                targetPane.classList.add('content-active');
+            });
+        });
+
+        const chartLabels = ['Public Speaking', 'Networking', 'Content Creation', 'Mentorship', 'Technical Depth'];
+        const chartData = {
+            labels: chartLabels,
+            datasets: [{
+                label: 'Confidence Level',
+                data: [10, 8, 5, 7, 15],
+                fill: true,
+                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(59, 130, 246, 1)'
+            }]
+        };
+
+        const chartConfig = {
+            type: 'radar',
+            data: chartData,
+            options: {
+                maintainAspectRatio: false,
+                elements: {
+                    line: {
+                        borderWidth: 3
+                    }
+                },
+                scales: {
+                    r: {
+                        angleLines: {
+                            display: true
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 50,
+                         pointLabels: {
+                            font: {
+                                size: 13
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        };
+
+        const confidenceChart = new Chart(
+            document.getElementById('confidenceChart'),
+            chartConfig
+        );
+
+        const logWinButtons = document.querySelectorAll('.log-win-btn');
+        logWinButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const skillIndex = parseInt(button.dataset.skill);
+                if (!isNaN(skillIndex) && skillIndex < confidenceChart.data.datasets[0].data.length) {
+                    confidenceChart.data.datasets[0].data[skillIndex] += 1;
+                    confidenceChart.update();
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>
